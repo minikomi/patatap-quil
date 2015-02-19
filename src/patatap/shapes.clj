@@ -132,3 +132,71 @@
     (assoc (->Prism created lifespan min-r n)
            :easer (easer-in-circ min-r max-r lifespan)
            )))
+
+; clay
+; ------------------------------------------------------------------------------
+
+(defn angle-between [[x1 y1] [x2 y2]]
+  (Math/atan2 (- x2 x1) (- y2 y1)))
+
+(defn distance-between [[x1 y1] [x2 y2]]
+  (Math/sqrt
+    (let [dx (- x2 x1)
+          dy (- y2 y1)]
+      (+ (* dx dx) (* dy dy)))))
+
+(defn gen-clay-points [n lifespan]
+  (for [i (range n)]
+    (let [; orginal point ------------------------------------------------------
+          pct      (/ i n)
+          theta    (* 2 Math/PI pct)
+          distance (* (height) (rand))
+          x        (* distance (Math/sin theta))
+          y        (* distance (Math/cos theta))
+          ; destination point --------------------------------------------------
+          impact            [(* (width) (rand)) (* (height) (rand))] 
+          travel-theta      (angle-between [x y] impact)
+          travel-distance   (distance-between [x y] impact)
+          adjusted-distance (* 10 (/ distance (Math/sqrt travel-distance)))
+          destination-x     (+ (* adjusted-distance (Math/cos travel-theta)) x)
+          destination-y     (+ (* adjusted-distance (Math/cos travel-theta)) y)
+          ]
+      {:x x
+       :y y
+       :x-easer (easer-in-circ x destination-x lifespan)
+       :y-easer (easer-in-circ y destination-y lifespan)
+       })))
+
+(defrecord Clay [created lifespan points orientation]
+  Shape
+  (update [{:keys [points] :as this}]
+    (println points)
+    (-> this
+        (assoc :points 
+               (map #(assoc % :x ((:x-easer %) (millis))
+                              :y ((:y-easer %) (millis)))
+                            points))))
+
+  (draw [{:keys [points]}]
+    (push-matrix)
+    (translate (width) 0)
+    (vertex 0 0)
+    (no-stroke)
+    (fill 255)
+    (println points)
+    (doseq [{:keys [x y]} points]
+      (curve-vertex x y))
+    (vertex 0 0)
+    (pop-matrix))
+
+  (alive [{:keys [lifespan created]}]
+    (>= lifespan (- (millis) created)))) 
+
+(defn make-clay [n]
+  (let [created (millis)
+        lifespan 1200
+        points (gen-clay-points n lifespan)
+        ]
+    (assoc (->Clay created lifespan points true)
+           :easer (easer-in-circ 0 100 lifespan)
+           )))

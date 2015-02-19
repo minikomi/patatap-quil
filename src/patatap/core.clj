@@ -15,6 +15,7 @@
   68 (update-in state [:current-shapes] conj (make-prism 3))
   70 (update-in state [:current-shapes] conj (make-prism 4))
   71 (update-in state [:current-shapes] conj (make-prism 5))
+  72 (update-in state [:current-shapes] conj (make-clay 6))
   ;default - return unchanged state
   state
   ))
@@ -35,7 +36,7 @@
 (defsketch patatap
   :title "patatap"
   :renderer :opengl
-  :size [800 800]
+  :size [1920 1080]
   :setup setup
   :update update-state
   :draw draw-state
