@@ -11,6 +11,10 @@
 (defn handle-key [state event]
  (case (:key-code event)
   65 (update-in state [:current-shapes] conj (make-wipe (< 0.5 (rand))))
+  83 (update-in state [:current-shapes] conj (make-veil (< 0.5 (rand))))
+  68 (update-in state [:current-shapes] conj (make-prism 3))
+  70 (update-in state [:current-shapes] conj (make-prism 4))
+  71 (update-in state [:current-shapes] conj (make-prism 5))
   ;default - return unchanged state
   state
   ))
@@ -30,7 +34,7 @@
 
 (defsketch patatap
   :title "patatap"
-  :renderer :p2d
+  :renderer :opengl
   :size [800 800]
   :setup setup
   :update update-state
