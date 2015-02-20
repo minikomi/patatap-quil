@@ -2,10 +2,26 @@
   (:use [quil.core]
         [patatap.easings]))
 
+; protocol
+; ------------------------------------------------------------------------------
+
 (defprotocol Shape 
   (draw [this] "draw this shape")
   (update [this] "update this shape")
   (alive [this] "should this shape remain?"))
+
+; util
+; ------------------------------------------------------------------------------
+
+(defn angle-between [[x1 y1] [x2 y2]]
+  (Math/atan2 (- x2 x1) (- y2 y1)))
+
+(defn distance-between [[x1 y1] [x2 y2]]
+  (Math/sqrt
+    (let [dx (- x2 x1)
+          dy (- y2 y1)]
+      (+ (* dx dx) (* dy dy)))))
+
 
 ; wipe
 ; ------------------------------------------------------------------------------
@@ -139,17 +155,33 @@
 ; clay
 ; ------------------------------------------------------------------------------
 
-(defn angle-between [[x1 y1] [x2 y2]]
-  (Math/atan2 (- x2 x1) (- y2 y1)))
+(defrecord Clay [created lifespan points center]
+  Shape
+  (update [{:keys [points created] :as this}]
+    (-> this
+        (assoc :points 
+               (map #(assoc % :x ((:x-easer %) (- (millis) created))
+                              :y ((:y-easer %) (- (millis) created)))
+                    points))))
 
-(defn distance-between [[x1 y1] [x2 y2]]
-  (Math/sqrt
-    (let [dx (- x2 x1)
-          dy (- y2 y1)]
-      (+ (* dx dx) (* dy dy)))))
+  (draw [{:keys [points center]}]
+    (push-matrix)
+    (apply translate center)
+    (no-stroke)
+    (fill 120 120 200)
+    (begin-shape)
+    (doseq [{:keys [x y]} points]
+      (curve-vertex x y))
+    (apply curve-vertex ((fn [p] [(:x p) (:y p)]) (first points))) 
+    (apply curve-vertex ((fn [p] [(:x p) (:y p)]) (second points))) 
+    (apply curve-vertex ((fn [p] [(:x p) (:y p)]) (nth points 2))) 
+    (end-shape)
+    (pop-matrix))
+
+  (alive [{:keys [lifespan created]}]
+    (>= lifespan (- (millis) created)))) 
 
 (defn gen-clay-points [n lifespan w h]
-
   (let [impact [(rand w) (rand h)]]
     (for [i (range n)]
       (let [; orginal point ------------------------------------------------------
@@ -170,32 +202,6 @@
          :x-easer (easer-out-circ x destination-x lifespan)
          :y-easer (easer-out-circ y destination-y lifespan)
          }))))
-
-(defrecord Clay [created lifespan points center]
-  Shape
-  (update [{:keys [points created] :as this}]
-    (-> this
-        (assoc :points 
-               (map #(assoc % :x ((:x-easer %) (- (millis) created))
-                              :y ((:y-easer %) (- (millis) created)))
-                    points))))
-
-  (draw [{:keys [points center]}]
-    (push-matrix)
-    (apply translate center)
-    (no-stroke)
-    (fill 220 220 200)
-    (begin-shape)
-    (doseq [{:keys [x y]} points]
-      (curve-vertex x y))
-    (apply curve-vertex ((fn [p] [(:x p) (:y p)]) (first points))) 
-    (apply curve-vertex ((fn [p] [(:x p) (:y p)]) (second points))) 
-    (apply curve-vertex ((fn [p] [(:x p) (:y p)]) (nth points 2))) 
-    (end-shape)
-    (pop-matrix))
-
-  (alive [{:keys [lifespan created]}]
-    (>= lifespan (- (millis) created)))) 
 
 (defn make-clay [n]
   (let [created (millis)
@@ -219,14 +225,14 @@
 ; Piston
 ; ------------------------------------------------------------------------------
 
-(defrecord Piston [created lifespan n leading trailing]
+(defrecord Piston [created lifespan color n leading trailing]
   Shape
   (update [{:keys [leading-easer trailing-easer created] :as this}]
     (-> this 
         (assoc :leading (leading-easer (- (millis) created)))
         (assoc :trailing (trailing-easer (- (millis) created)))))
 
-  (draw [{:keys [n leading trailing]}]
+  (draw [{:keys [color n leading trailing]}]
     (let [w-unit (/ (width) 6)
           v-unit (/ (height) 3)
           rect-w (* 4 w-unit)
@@ -239,7 +245,7 @@
       (translate w-unit v-unit)
 
       (no-stroke)
-      (fill (+ 100 (* n 10)) (- 200 (* n 20)) 100)
+      (apply fill color)
 
       (doseq [i (range n)]
         (begin-shape)
@@ -253,9 +259,7 @@
                 (+ (* i (+ spacing individual-height))
                    individual-height))
         (vertex (* trailing rect-w) (* i (+ spacing individual-height)))
-        (end-shape)
-
-        )
+        (end-shape))
       (pop-matrix))
     )
 
@@ -268,10 +272,69 @@
         wipe-speed 400
         start (if left-to-right 0 1)
         end   (if left-to-right 1 0)
+        color [(+ 100 (* n 10)) (- 200 (* n 20)) 100] 
         ]
-    (assoc (->Piston created (+ wipe-speed tail-delay) n start start)
+    (assoc (->Piston created (+ wipe-speed tail-delay) color n start start)
            :z-index 10
            :leading-easer (easer-in-out-circ start end wipe-speed)
            :trailing-easer (->> (easer-in-out-circ start end wipe-speed) 
                                 (delay-start tail-delay))
+           )))
+
+
+; Confetti
+; ------------------------------------------------------------------------------
+
+(defrecord Confetti [created lifespan points center]
+  Shape
+  (update [{:keys [points created] :as this}]
+    (-> this
+        (assoc :points 
+               (map #(assoc % :x ((:x-easer %) (- (millis) created))
+                              :y ((:y-easer %) (- (millis) created)))
+                    points))))
+
+  (draw [{:keys [points center]}]
+    (push-matrix)
+    (apply translate center)
+    (no-stroke)
+    (fill 220 220 200)
+    (doseq [{:keys [x y]} points]
+      (ellipse x y 40 40))
+    (pop-matrix))
+
+  (alive [{:keys [lifespan created]}]
+    (>= lifespan (- (millis) created)))) 
+
+(defn gen-confetti-points [n lifespan [center-x center-y] w h]
+  (let [theta     (Math/atan2 (- (/ w 2) center-x) (- (/ h 2) center-y))
+        deviation (/ (Math/PI) 2)]
+    (for [i (range n)]
+      (let [
+            t (- (+ theta (* 2 deviation (rand))) 
+                    deviation)
+            a (* (rand) 600)
+            destination-x (* a (Math/cos t))
+            destination-y (* a (Math/sin t))
+            ]
+        {:x 0
+         :y 0
+         :x-easer (easer-out-circ 0 destination-x lifespan)
+         :y-easer (easer-out-circ 0 destination-y lifespan)
+         }))))
+
+(defn make-confetti [n]
+  (let [created (millis)
+        lifespan 750
+        center (case (rand-nth [:n :s :e :w]) 
+                 :n  [(/ (width) 2) 0]
+                 :s  [(/ (width) 2) (height)]
+                 :e  [(width)       (/ (height) 2)]
+                 :w  [0             (/ (height) 2)]
+                 [(/ (width) 2) (/ (height) 2)]
+                 )
+        points (gen-confetti-points n lifespan center (width) (height))
+        ]
+    (assoc (->Confetti created lifespan points center)
+           :z-index 3
            )))

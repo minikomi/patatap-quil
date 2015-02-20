@@ -20,6 +20,7 @@
   74 (update-in state [:current-shapes] conj (make-piston 1 (< 0.5 (rand))   ))
   75 (update-in state [:current-shapes] conj (make-piston 4 (< 0.5 (rand))   ))
   76 (update-in state [:current-shapes] conj (make-piston 7 (< 0.5 (rand))   ))
+  77 (update-in state [:current-shapes] conj (make-confetti 16))
 
   ;default - return unchanged state
   state
@@ -42,7 +43,7 @@
 (defsketch patatap
   :title "patatap"
   :renderer :opengl
-  :size [1920 1080]
+  :size [500 500]
   :setup setup
   :update update-state
   :draw draw-state
