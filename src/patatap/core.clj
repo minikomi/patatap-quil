@@ -17,6 +17,10 @@
   70 (update-in state [:current-shapes] conj (make-prism 4))
   71 (update-in state [:current-shapes] conj (make-prism 5))
   72 (update-in state [:current-shapes] conj (make-clay 12))
+  74 (update-in state [:current-shapes] conj (make-piston 1 (< 0.5 (rand))   ))
+  75 (update-in state [:current-shapes] conj (make-piston 4 (< 0.5 (rand))   ))
+  76 (update-in state [:current-shapes] conj (make-piston 7 (< 0.5 (rand))   ))
+
   ;default - return unchanged state
   state
   ))
@@ -26,10 +30,11 @@
              #(->> %
                    (map update)
                    (filter alive)
+                   (sort-by :z-index)
                    )))
 
 (defn draw-state [state]
-  (background 20)
+  (background 180)
   (blend-mode :blend)
   (doseq [s (:current-shapes state)] 
     (draw s)))

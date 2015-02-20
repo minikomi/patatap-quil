@@ -39,6 +39,7 @@
         end   (if left-to-right (width) 0)
         ]
     (assoc (->Wipe created (+ wipe-speed tail-delay) start start)
+           :z-index 0
            :leading-easer (easer-in-out-circ start end wipe-speed)
            :trailing-easer (->> (easer-in-out-circ start end wipe-speed) 
                                 (delay-start tail-delay))
@@ -77,6 +78,7 @@
         end   (if left-to-right (height) 0)
         ]
     (assoc (->Veil created (+ wipe-speed tail-delay) start start)
+           :z-index 0
            :leading-easer (easer-in-out-circ start end wipe-speed)
            :trailing-easer (->> (easer-in-out-circ start end wipe-speed) 
                                 (delay-start tail-delay))
@@ -130,6 +132,7 @@
         max-r 1000
         lifespan 1200]
     (assoc (->Prism created lifespan min-r n)
+           :z-index 4
            :easer (easer-in-circ min-r max-r lifespan)
            )))
 
@@ -181,7 +184,7 @@
     (push-matrix)
     (apply translate center)
     (no-stroke)
-    (fill 255)
+    (fill 220 220 200)
     (begin-shape)
     (doseq [{:keys [x y]} points]
       (curve-vertex x y))
@@ -209,4 +212,66 @@
                  )
         points (gen-clay-points n lifespan (width) (height))
         ]
-    (->Clay created lifespan points center)))
+    (assoc (->Clay created lifespan points center)
+           :z-index 1
+           )))
+
+; Piston
+; ------------------------------------------------------------------------------
+
+(defrecord Piston [created lifespan n leading trailing]
+  Shape
+  (update [{:keys [leading-easer trailing-easer created] :as this}]
+    (-> this 
+        (assoc :leading (leading-easer (- (millis) created)))
+        (assoc :trailing (trailing-easer (- (millis) created)))))
+
+  (draw [{:keys [n leading trailing]}]
+    (let [w-unit (/ (width) 6)
+          v-unit (/ (height) 3)
+          rect-w (* 4 w-unit)
+          individual-height (if (> 2 n) v-unit 
+                              (* 0.8 (/ v-unit n)))
+          spacing (if (> 2 n) 0
+                              (/ (* 0.2 (/ v-unit n) n) (dec n)))]
+
+      (push-matrix)
+      (translate w-unit v-unit)
+
+      (no-stroke)
+      (fill (+ 100 (* n 10)) (- 200 (* n 20)) 100)
+
+      (doseq [i (range n)]
+        (begin-shape)
+
+        (vertex (* trailing rect-w) (* i (+ spacing individual-height)))
+        (vertex (* leading rect-w)  (* i (+ spacing individual-height)))
+        (vertex (* leading rect-w)
+                (+ (* i (+ spacing individual-height))
+                   individual-height))
+        (vertex (* trailing rect-w) 
+                (+ (* i (+ spacing individual-height))
+                   individual-height))
+        (vertex (* trailing rect-w) (* i (+ spacing individual-height)))
+        (end-shape)
+
+        )
+      (pop-matrix))
+    )
+
+  (alive [{:keys [lifespan created]}]
+    (>= lifespan (- (millis) created)))) 
+
+(defn make-piston [n left-to-right]
+  (let [created (millis)
+        tail-delay 200
+        wipe-speed 400
+        start (if left-to-right 0 1)
+        end   (if left-to-right 1 0)
+        ]
+    (assoc (->Piston created (+ wipe-speed tail-delay) n start start)
+           :z-index 10
+           :leading-easer (easer-in-out-circ start end wipe-speed)
+           :trailing-easer (->> (easer-in-out-circ start end wipe-speed) 
+                                (delay-start tail-delay))
+           )))
