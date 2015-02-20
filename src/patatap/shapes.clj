@@ -145,48 +145,50 @@
           dy (- y2 y1)]
       (+ (* dx dx) (* dy dy)))))
 
-(defn gen-clay-points [n lifespan]
-  (for [i (range n)]
-    (let [; orginal point ------------------------------------------------------
-          pct      (/ i n)
-          theta    (* 2 Math/PI pct)
-          distance (* (height) (rand))
-          x        (* distance (Math/sin theta))
-          y        (* distance (Math/cos theta))
-          ; destination point --------------------------------------------------
-          impact            [(* (width) (rand)) (* (height) (rand))] 
-          travel-theta      (angle-between [x y] impact)
-          travel-distance   (distance-between [x y] impact)
-          adjusted-distance (* 10 (/ distance (Math/sqrt travel-distance)))
-          destination-x     (+ (* adjusted-distance (Math/cos travel-theta)) x)
-          destination-y     (+ (* adjusted-distance (Math/cos travel-theta)) y)
-          ]
-      {:x x
-       :y y
-       :x-easer (easer-in-circ x destination-x lifespan)
-       :y-easer (easer-in-circ y destination-y lifespan)
-       })))
+(defn gen-clay-points [n lifespan w h]
 
-(defrecord Clay [created lifespan points orientation]
+  (let [impact [(rand w) (rand h)]]
+    (for [i (range n)]
+      (let [; orginal point ------------------------------------------------------
+            pct      (/ i n)
+            theta    (* 2 Math/PI pct)
+            x        (* h (Math/cos theta))
+            y        (* h (Math/sin theta))
+            ; destination point --------------------------------------------------
+            travel-theta      (- (angle-between [x y] impact) theta)
+            travel-distance   (distance-between [x y] impact)
+            adjusted-distance (* 6 (/ h (Math/sqrt travel-distance)))
+            destination-x     (+ (* adjusted-distance (Math/cos travel-theta)) x)
+            destination-y     (+ (* adjusted-distance (Math/sin travel-theta)) y)
+            ]
+
+        {:x x
+         :y y
+         :x-easer (easer-out-circ x destination-x lifespan)
+         :y-easer (easer-out-circ y destination-y lifespan)
+         }))))
+
+(defrecord Clay [created lifespan points center]
   Shape
-  (update [{:keys [points] :as this}]
-    (println points)
+  (update [{:keys [points created] :as this}]
     (-> this
         (assoc :points 
-               (map #(assoc % :x ((:x-easer %) (millis))
-                              :y ((:y-easer %) (millis)))
-                            points))))
+               (map #(assoc % :x ((:x-easer %) (- (millis) created))
+                              :y ((:y-easer %) (- (millis) created)))
+                    points))))
 
-  (draw [{:keys [points]}]
+  (draw [{:keys [points center]}]
     (push-matrix)
-    (translate (width) 0)
-    (vertex 0 0)
+    (apply translate center)
     (no-stroke)
     (fill 255)
-    (println points)
+    (begin-shape)
     (doseq [{:keys [x y]} points]
       (curve-vertex x y))
-    (vertex 0 0)
+    (apply curve-vertex ((fn [p] [(:x p) (:y p)]) (first points))) 
+    (apply curve-vertex ((fn [p] [(:x p) (:y p)]) (second points))) 
+    (apply curve-vertex ((fn [p] [(:x p) (:y p)]) (nth points 2))) 
+    (end-shape)
     (pop-matrix))
 
   (alive [{:keys [lifespan created]}]
@@ -194,9 +196,17 @@
 
 (defn make-clay [n]
   (let [created (millis)
-        lifespan 1200
-        points (gen-clay-points n lifespan)
+        lifespan 750
+        center (case (rand-nth [:n :nw :w :sw :s :se :e]) 
+                 :n  [(/ (width) 2) 0]
+                 :nw [0             0]
+                 :w  [0             (/ (height) 2)]
+                 :sw [0             (height)]
+                 :s  [(/ (width) 2) (height)]
+                 :se [(width)       (height)]
+                 :e  [0             (/ (height) 2)]
+                 [(width)       0]
+                 )
+        points (gen-clay-points n lifespan (width) (height))
         ]
-    (assoc (->Clay created lifespan points true)
-           :easer (easer-in-circ 0 100 lifespan)
-           )))
+    (->Clay created lifespan points center)))

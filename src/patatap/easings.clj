@@ -56,3 +56,15 @@
 
 (defn easer-in-circ [startval endval duration]
   (partial in-circular startval (- endval startval) duration))
+
+(defn out-circular [beginning change duration time-elapsed]
+  ; return c * Math.sqrt(1 - (t=t/d-1)*t) + b;
+  (if (<= duration time-elapsed) (+ beginning change) 
+   (let [normalized-time (- (/ time-elapsed duration) 1)]
+    (+ beginning
+       (* change
+          (Math/sqrt (- 1 (* normalized-time normalized-time)))
+          )))))
+
+(defn easer-out-circ [startval endval duration]
+  (partial out-circular startval (- endval startval) duration))

@@ -6,6 +6,7 @@
     [quil.middleware :as m]))
 
 (defn setup []
+  (smooth 8)
   {:current-shapes []})
 
 (defn handle-key [state event]
@@ -15,7 +16,7 @@
   68 (update-in state [:current-shapes] conj (make-prism 3))
   70 (update-in state [:current-shapes] conj (make-prism 4))
   71 (update-in state [:current-shapes] conj (make-prism 5))
-  72 (update-in state [:current-shapes] conj (make-clay 6))
+  72 (update-in state [:current-shapes] conj (make-clay 12))
   ;default - return unchanged state
   state
   ))
