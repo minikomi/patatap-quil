@@ -285,7 +285,7 @@
 ; Confetti
 ; ------------------------------------------------------------------------------
 
-(defrecord Confetti [created lifespan points center]
+(defrecord Confetti [created lifespan points]
   Shape
   (update [{:keys [points created] :as this}]
     (-> this
@@ -296,7 +296,6 @@
 
   (draw [{:keys [points center]}]
     (push-matrix)
-    (apply translate center)
     (no-stroke)
     (fill 220 220 200)
     (doseq [{:keys [x y]} points]
@@ -306,35 +305,40 @@
   (alive [{:keys [lifespan created]}]
     (>= lifespan (- (millis) created)))) 
 
-(defn gen-confetti-points [n lifespan [center-x center-y] w h]
-  (let [theta     (Math/atan2 (- (/ w 2) center-x) (- (/ h 2) center-y))
-        deviation (/ (Math/PI) 2)]
+(defn gen-confetti-points [n lifespan orientation w h]
+  (let [theta     (case orientation
+                    :n  (radians 90)
+                    :e  (radians 180)
+                    :s  (radians 270)
+                    :w  (radians 0)
+                    [(/ (width) 2) (/ (height) 2)]
+                    )
+        deviation (radians 120)
+        [center-x center-y] (case orientation
+                              :n  [(/ (width) 2) 0]
+                              :s  [(/ (width) 2) (height)]
+                              :e  [(width)       (/ (height) 2)]
+                              :w  [0             (/ (height) 2)]
+                              [(/ (width) 2) (/ (height) 2)]
+                              )]
     (for [i (range n)]
-      (let [
-            t (- (+ theta (* 2 deviation (rand))) 
-                    deviation)
+      (let [t (- (+ theta (* (rand) deviation)) (/ deviation 2))
             a (* (rand) 600)
-            destination-x (* a (Math/cos t))
-            destination-y (* a (Math/sin t))
+            destination-x (+ center-x (* a (Math/cos t)))
+            destination-y (+ center-y (* a (Math/sin t)))
             ]
-        {:x 0
-         :y 0
-         :x-easer (easer-out-circ 0 destination-x lifespan)
-         :y-easer (easer-out-circ 0 destination-y lifespan)
+        {:x center-x
+         :y center-y
+         :x-easer (easer-out-circ center-x destination-x lifespan)
+         :y-easer (easer-out-circ center-y destination-y lifespan)
          }))))
 
 (defn make-confetti [n]
   (let [created (millis)
         lifespan 750
-        center (case (rand-nth [:n :s :e :w]) 
-                 :n  [(/ (width) 2) 0]
-                 :s  [(/ (width) 2) (height)]
-                 :e  [(width)       (/ (height) 2)]
-                 :w  [0             (/ (height) 2)]
-                 [(/ (width) 2) (/ (height) 2)]
-                 )
-        points (gen-confetti-points n lifespan center (width) (height))
+        orientation (rand-nth [:n :s :e :w])
+        points (gen-confetti-points n lifespan orientation (width) (height))
         ]
-    (assoc (->Confetti created lifespan points center)
+    (assoc (->Confetti created lifespan points)
            :z-index 3
            )))
