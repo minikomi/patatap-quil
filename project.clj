@@ -6,4 +6,7 @@
   :dependencies [[org.clojure/clojure "1.6.0"]
                  [quil "2.2.5"]
                  [ddf.minim "2.2.0"]
-                 ])
+                 ]
+  
+  :main patatap.core
+  )
