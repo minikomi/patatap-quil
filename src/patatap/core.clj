@@ -100,7 +100,7 @@
                        (sort-by :z-index)
                        ))
       ((fn [s]
-        (if (.isRange beat 0 7 4)
+        (if (.isRange beat 2 6 4)
           (update-in s [:current-shapes] 
                      conj 
                      (case (rand-int 4) 
@@ -111,10 +111,10 @@
 
 
       ((fn [s]
-        (if (.isRange beat 11 12 2)
+        (if (.isRange beat 12 16 4)
           (update-in s [:current-shapes] 
                      conj 
-                     (case (rand-int 5)
+                     (case (rand-int 4)
                        2 (s/make-piston 1 (< 0.5 (rand)))  
                        3 (s/make-piston 5 (< 0.5 (rand)))  
                        (s/make-piston 7 (< 0.5 (rand)))  
@@ -124,14 +124,32 @@
           s
           )
         ))
+
       ((fn [s]
-        (if (.isRange beat 22 24 2)
+        (if (.isRange beat 4 11 3)
           (update-in s [:current-shapes] 
                      conj 
                      (case (rand-int 5)
+
                        0 (s/make-prism 3) 
                        1 (s/make-prism 4) 
-                       2 (s/make-prism 5)    
+                       2 (s/make-prism 6) 
+                       (s/make-prism 5)
+
+
+                       ))
+
+
+          s
+          )
+        ))
+
+
+      ((fn [s]
+        (if (.isRange beat 18 21 3)
+          (update-in s [:current-shapes] 
+                     conj 
+                     (case (rand-int 5)
                        (s/make-confetti 16)  
 
 

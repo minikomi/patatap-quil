@@ -136,7 +136,7 @@
       (no-stroke)
       (fill 255)
       (doseq [[x y] points]
-        (ellipse x y (/ r 16) (/ r 16))))
+        (ellipse x y (/ r 24) (/ r 24))))
     (pop-matrix))
 
   (alive [{:keys [lifespan created]}]
@@ -299,7 +299,7 @@
     (no-stroke)
     (fill 220 220 200)
     (doseq [{:keys [x y]} points]
-      (ellipse x y 40 40))
+      (ellipse x y 20 20))
     (pop-matrix))
 
   (alive [{:keys [lifespan created]}]
