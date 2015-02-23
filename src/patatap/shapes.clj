@@ -187,12 +187,12 @@
       (let [; orginal point ------------------------------------------------------
             pct      (/ i n)
             theta    (* 2 Math/PI pct)
-            x        (* h (Math/cos theta))
-            y        (* h (Math/sin theta))
+            x        (* 600 (Math/cos theta))
+            y        (* 600 (Math/sin theta))
             ; destination point --------------------------------------------------
             travel-theta      (- (angle-between [x y] impact) theta)
             travel-distance   (distance-between [x y] impact)
-            adjusted-distance (* 6 (/ h (Math/sqrt travel-distance)))
+            adjusted-distance (* 2 (/ h (Math/sqrt travel-distance)))
             destination-x     (+ (* adjusted-distance (Math/cos travel-theta)) x)
             destination-y     (+ (* adjusted-distance (Math/sin travel-theta)) y)
             ]
@@ -205,7 +205,7 @@
 
 (defn make-clay [n]
   (let [created (millis)
-        lifespan 750
+        lifespan 500
         center (case (rand-nth [:n :nw :w :sw :s :se :e]) 
                  :n  [(/ (width) 2) 0]
                  :nw [0             0]
@@ -335,7 +335,7 @@
 
 (defn make-confetti [n]
   (let [created (millis)
-        lifespan 750
+        lifespan 700
         orientation (rand-nth [:n :s :e :w])
         points (gen-confetti-points n lifespan orientation (width) (height))
         ]

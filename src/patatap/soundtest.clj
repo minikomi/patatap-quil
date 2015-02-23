@@ -1,6 +1,8 @@
 (ns patatap.soundtest
   (:require [quil.core :as q]
-            [quil.middleware :as m])
+            [quil.middleware :as m]
+            [patatap.ui :as ui]
+            )
   (:import (ddf.minim Minim)
            (ddf.minim.analysis FFT)
            ))
@@ -10,7 +12,8 @@
         player (.loadFile m "/Users/adam/jddj3j.mp3")
         fft (FFT. (.bufferSize player) (.sampleRate player))]
     (.play player)
-    {:player player :fft fft}))
+    {:player player :fft fft}
+    ))
 
 (defn draw-state [{:keys [player fft]}]
   (.forward fft (.mix player))
