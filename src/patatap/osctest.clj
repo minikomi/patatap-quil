@@ -1,0 +1,39 @@
+(ns patatap.osctest
+  (:require [quil.core :refer :all]
+            [overtone.osc :as osc]
+            ))
+
+(def server (osc/osc-server 1337))
+
+(osc/osc-handle server "/kick" (fn [msg] (println msg)))
+
+(defn draw
+  "Example usage of with-translation and with-rotation."
+  []
+  (background-float 125)
+  (stroke-float 10)
+  (fill-float (rand-int 125) (rand-int 125) (rand-int 125))
+  (with-translation [(/ 200 2) (/ 200 2)]
+    (with-rotation [QUARTER-PI]
+      (begin-shape)
+      (vertex -50  50)
+      (vertex  50  50)
+      (vertex  50 -50)
+      (vertex -50 -50)
+      (end-shape :close)))
+  (display-filter :invert))
+
+(defn setup []
+  "Runs once."
+  (smooth)
+  (no-stroke)
+  (fill 226)
+  (frame-rate 10))
+
+;; Now we just need to define an applet:
+
+(defsketch example2
+  :title "An example."
+  :setup setup
+  :draw draw
+  :size [200 200])
