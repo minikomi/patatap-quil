@@ -23,8 +23,9 @@
     (push-matrix)
     (translate x y)
     (no-stroke)
-    (apply fill (if active [120 50 50] [60 60 160]))
+    (apply fill (if active [180 50 50] [60 60 180]))
     (rect 0 0 14 14)
+    (fill 220 10 220)
     (text-size 16)
     (text title 18 12)
     (pop-matrix))
@@ -45,13 +46,14 @@
     (translate x y)
     (no-stroke)
     ; background
-    (apply fill [60 60 60 120])
+    (apply fill [90 90 90 120])
     (rect 0 0 width 14)
     ; center
-    (apply fill (if active [120 50 50] [60 60 160]))
+    (apply fill (if active [180 50 50] [60 60 180]))
     (let [value-width (* width (/ (- current min-v) (- max-v min-v)))] 
       (rect 0 0 value-width 14))
     ; title
+    (fill 220 10 220)
     (text-size 16)
     (text title (+ width 2) 12)
     ; text
@@ -67,9 +69,10 @@
              :current
              (cond (> x ev-x) min-v
                    (< (+ x width) ev-x) max-v
-                   :else (+ min-v 
+                   :else (Math/floor
+                           (+ min-v 
                             (* (- max-v min-v)
-                               (/ (- ev-x x) width)))))
+                               (/ (- ev-x x) width))))))
       this
       ))
 

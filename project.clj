@@ -7,6 +7,7 @@
                  [quil "2.2.5"]
                  [ddf.minim "2.2.0"]
                  ]
+  :profiles {:uberjar {:aot [patatap.core]}}
   
   :main patatap.core
   )
