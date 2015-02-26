@@ -21,28 +21,59 @@
         osc-chan (chan)
         ]
 
-    (osc/osc-handle server "/kick"  (fn [_] (put! osc-chan {:msg :kick})))
-    (osc/osc-handle server "/snare" (fn [_] (put! osc-chan {:msg :snare})))
-    (osc/osc-handle server "/hat"   (fn [_] (put! osc-chan {:msg :hat})))
+     ( osc/osc-handle server "/snare"   ( fn [_] ( put! osc-chan  {:msg 1})))
+     ( osc/osc-handle server "/hat"     ( fn [_] ( put! osc-chan {:msg 2})))
+     ( osc/osc-handle server "/kick"    ( fn [_] ( put! osc-chan  {:msg 3})))
+     ( osc/osc-handle server "/piano"   ( fn [_] ( put! osc-chan {:msg 4})))
+     ( osc/osc-handle server "/accent1" ( fn [_] ( put! osc-chan  {:msg 5})))
+     ( osc/osc-handle server "/accent2" ( fn [_] ( put! osc-chan  {:msg 6})))
+     ( osc/osc-handle server "/accent3" ( fn [_] ( put! osc-chan {:msg 7})))
 
     (go 
       (loop [msg (:msg (<! osc-chan))]
         (case msg
-          :kick  (if (< 0.5 (rand))
-                   (swap! shapes conj (case (rand-int 10)
-                                      1 (s/make-wipe (< 0.5 (rand)))
-                                      2 (s/make-veil (< 0.5 (rand)))
-                                      (s/make-clay 12))))
-          :snare (if (> 0.5 (rand)) (swap! shapes conj (case (rand-int 7)
-                                    0 (s/make-prism 3)  
-                                    1 (s/make-prism 4)  
-                                    2 (s/make-prism 5)  
-                                    3 (s/make-prism 6)  
-                                    4 (s/make-piston 1 (< 0.5 (rand)))   
-                                    5 (s/make-piston 4 (< 0.5 (rand)))   
-                                    6 (s/make-piston 7 (< 0.5 (rand)))   
-                                     (s/make-piston 4 (< 0.5 (rand)))))) 
-          :hat   (if (< 0.3 (rand)) (swap! shapes conj (s/make-confetti 12))) 
+          1 (swap! shapes 
+                   (fn [shps]
+                     (conj
+                       (filterv #(not (= (:type %) :piston)) shps)
+                       (case (rand-int 5)
+                        
+                        
+                         0 (s/make-piston 1( < 0.5 ( rand)))
+                          1 (s/make-piston 7( < 0.5 ( rand)))
+                         (s/make-piston 4( < 0.5 ( rand)))
+                         
+                         ) 
+                       )))
+          2 (swap! shapes 
+                   (fn [shps] 
+                     (conj
+                       (filterv #(not (= (:type %) :confetti)) shps)    
+                       (s/make-confetti 10) 
+
+                       ))
+                   )
+          3 (swap! shapes 
+                   (fn [shps] 
+                     (conj
+                       (filterv #(not (= (:type %) :clay)) shps)   
+                       ( s/make-clay 12))  
+                     )
+                   )
+          4 (swap! shapes
+                   (fn [shps] 
+                     (conj
+                       (filterv #(not (= (:type %) :prism)) shps)   
+                       
+                         (s/make-prism (+ 3 (* 2 (rand-int 3))) )
+                         
+                         )  
+                     )
+
+                   )
+          5 (swap! shapes conj ( s/make-prism 6))
+          6 (swap! shapes conj ( s/make-piston 7  ( < 0.5 ( rand))))
+          7 (swap! shapes conj ( s/make-veil  ( < 0.5 ( rand))))
         )
         (recur (:msg (<! osc-chan)))))
 
@@ -50,12 +81,13 @@
                   :bg-color (ui/->ToggleBox 90 20 "bg" false)
                   }
      :show-ui true
+     :server server
      }
   ))
 
 
 (defn handle-key [state event]
- (case (:key-code event)
+  (case (:key-code event)
   32 (update-in state [:show-ui] not)
   65 (do (swap! shapes  conj (s/make-wipe (< 0.5 (rand)))) state)
   83 (do (swap! shapes  conj (s/make-veil (< 0.5 (rand)))) state)
@@ -104,13 +136,16 @@
 
 
 (defn draw-state [state]
-  (if (->> state :current-ui :bg-color :active)
-    (background 180)
-    (background 20))
+  (background 181 181 181)
   (doseq [s @shapes] (s/draw s))
   ; (save-frame "######.tga")
   )
 
+
+(defn on-close [state]
+  (osc/osc-close (:server state))
+
+  )
 
 (defn -main [& args]
 
@@ -121,10 +156,10 @@
   :setup setup
   :update update-state
   :draw draw-state
+  :on-close on-close
   :key-pressed handle-key
   :mouse-pressed  handle-mousedown
   :mouse-released  handle-mouseup
   :mouse-dragged  handle-mousemove
   :middleware [m/fun-mode]
-  :features [:exit-on-close]
   ))

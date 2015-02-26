@@ -2,6 +2,19 @@
   (:use [quil.core]
         [patatap.easings]))
 
+
+(def colors
+   [
+    [227 79 12]
+    [163 141 116]
+    [141 164 170]
+    [255 197 215]
+    [10 10 10]
+    ]
+
+
+  )
+
 ; protocol
 ; ------------------------------------------------------------------------------
 
@@ -35,7 +48,7 @@
 
   (draw [{:keys [leading trailing]}]
     (no-stroke)
-    (fill 200 200 100)
+    (apply fill (colors 0))
     (begin-shape)
     (vertex trailing 0)
     (vertex leading  0)
@@ -65,16 +78,16 @@
 ; veil
 ; ------------------------------------------------------------------------------
 
-(defrecord Veil [created lifespan leading trailing]
+(defrecord Veil [created lifespan leading trailing color]
   Shape
   (update [{:keys [leading-easer trailing-easer created] :as this}]
     (-> this 
         (assoc :leading (leading-easer (- (millis) created)))
         (assoc :trailing (trailing-easer (- (millis) created)))))
 
-  (draw [{:keys [leading trailing]}]
+  (draw [{:keys [leading trailing color]}]
     (no-stroke)
-    (fill 200 100 100)
+    (apply fill color)
     (begin-shape)
     (vertex 0       trailing)
     (vertex 0       leading)
@@ -93,7 +106,9 @@
         start (if left-to-right 0 (height))
         end   (if left-to-right (height) 0)
         ]
-    (assoc (->Veil created (+ wipe-speed tail-delay) start start)
+    (assoc (->Veil created (+ wipe-speed tail-delay) start start
+                   (colors 3) 
+                   )
            :z-index 0
            :leading-easer (easer-in-out-circ start end wipe-speed)
            :trailing-easer (->> (easer-in-out-circ start end wipe-speed) 
@@ -111,19 +126,19 @@
           y     (* r (Math/sin theta))]
       [x y])))
 
-(defrecord Prism [created lifespan r n]
+(defrecord Prism [created lifespan r n color]
   Shape
   (update [{:keys [easer created] :as this}]
     (-> this
         (assoc :r (easer (- (millis) created)))
         ))
 
-  (draw [{:keys [n r]}]
+  (draw [{:keys [n r color]}]
     (let [points (gen-prism-points n r)]
 
       ; webbing
-      (stroke 255)
       (no-fill)
+      (apply stroke color)
       (push-matrix)
       (translate (/ (width) 2) (/ (height) 2))
       (begin-shape)
@@ -134,7 +149,7 @@
 
       ; circles
       (no-stroke)
-      (fill 255)
+      (apply fill color)
       (doseq [[x y] points]
         (ellipse x y (/ r 24) (/ r 24))))
     (pop-matrix))
@@ -147,7 +162,8 @@
         min-r 10
         max-r 1000
         lifespan 1200]
-    (assoc (->Prism created lifespan min-r n)
+    (assoc (->Prism created lifespan min-r n (colors 4))
+           :type :prism
            :z-index 4
            :easer (easer-in-circ min-r max-r lifespan)
            )))
@@ -155,7 +171,7 @@
 ; clay
 ; ------------------------------------------------------------------------------
 
-(defrecord Clay [created lifespan points center]
+(defrecord Clay [created lifespan points center color]
   Shape
   (update [{:keys [points created] :as this}]
     (-> this
@@ -164,11 +180,11 @@
                               :y ((:y-easer %) (- (millis) created)))
                     points))))
 
-  (draw [{:keys [points center]}]
+  (draw [{:keys [points center color]}]
     (push-matrix)
     (apply translate center)
+    (apply fill color)
     (no-stroke)
-    (fill 120 120 200)
     (begin-shape)
     (doseq [{:keys [x y]} points]
       (curve-vertex x y))
@@ -187,8 +203,8 @@
       (let [; orginal point ------------------------------------------------------
             pct      (/ i n)
             theta    (* 2 Math/PI pct)
-            x        (* 600 (Math/cos theta))
-            y        (* 600 (Math/sin theta))
+            x        (* 1200 (Math/cos theta))
+            y        (* 1200 (Math/sin theta))
             ; destination point --------------------------------------------------
             travel-theta      (- (angle-between [x y] impact) theta)
             travel-distance   (distance-between [x y] impact)
@@ -196,8 +212,8 @@
             destination-x     (+ (* adjusted-distance (Math/cos travel-theta)) x)
             destination-y     (+ (* adjusted-distance (Math/sin travel-theta)) y)
             ]
-
-        {:x x
+        {
+         :x x
          :y y
          :x-easer (easer-out-circ x destination-x lifespan)
          :y-easer (easer-out-circ y destination-y lifespan)
@@ -205,7 +221,7 @@
 
 (defn make-clay [n]
   (let [created (millis)
-        lifespan 500
+        lifespan 600
         center (case (rand-nth [:n :nw :w :sw :s :se :e]) 
                  :n  [(/ (width) 2) 0]
                  :nw [0             0]
@@ -216,9 +232,13 @@
                  :e  [0             (/ (height) 2)]
                  [(width)       0]
                  )
-        points (gen-clay-points n lifespan (width) (height))
+        points (gen-clay-points n lifespan (width) (height)
+                                
+                                
+                                )
         ]
-    (assoc (->Clay created lifespan points center)
+    (assoc (->Clay created lifespan points center (colors 2) )
+           :type :clay
            :z-index 1
            )))
 
@@ -234,12 +254,13 @@
 
   (draw [{:keys [color n leading trailing]}]
     (let [w-unit (/ (width) 6)
-          v-unit (/ (height) 3)
+          v-unit (/ (height) 4)
           rect-w (* 4 w-unit)
-          individual-height (if (> 2 n) v-unit 
-                              (* 0.8 (/ v-unit n)))
+          innerheight (* v-unit 2)
+          individual-height (if (> 2 n) innerheight
+                              (* 0.8 (/ innerheight n)))
           spacing (if (> 2 n) 0
-                              (/ (* 0.2 (/ v-unit n) n) (dec n)))]
+                              (/ (* 0.2 (/ innerheight n) n) (dec n)))]
 
       (push-matrix)
       (translate w-unit v-unit)
@@ -274,7 +295,8 @@
         end   (if left-to-right 1 0)
         color [(+ 100 (* n 10)) (- 200 (* n 20)) 100] 
         ]
-    (assoc (->Piston created (+ wipe-speed tail-delay) color n start start)
+    (assoc (->Piston created (+ wipe-speed tail-delay) (colors (mod n 4)) n start start)
+           :type :piston
            :z-index 10
            :leading-easer (easer-in-out-circ start end wipe-speed)
            :trailing-easer (->> (easer-in-out-circ start end wipe-speed) 
@@ -340,5 +362,6 @@
         points (gen-confetti-points n lifespan orientation (width) (height))
         ]
     (assoc (->Confetti created lifespan points)
+           :type :confetti
            :z-index 3
            )))
