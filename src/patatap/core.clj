@@ -138,7 +138,6 @@
 (defn draw-state [state]
   (background 181 181 181)
   (doseq [s @shapes] (s/draw s))
-  ; (save-frame "######.tga")
   )
 
 
