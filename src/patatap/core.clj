@@ -16,7 +16,7 @@
 
 (defn setup []
   (smooth 8)
-  (frame-rate 25)
+  (frame-rate 30)
   (let [server (osc/osc-server 1337)
         osc-chan (chan)
         ]
@@ -108,7 +108,7 @@
     (background 180)
     (background 20))
   (doseq [s @shapes] (s/draw s))
-  (save-frame "######.tga")
+  ; (save-frame "######.tga")
   )
 
 
