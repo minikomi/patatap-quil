@@ -102,7 +102,7 @@
 (defn make-veil [left-to-right]
   (let [created (millis)
         tail-delay 450
-        wipe-speed 800
+        wipe-speed 600
         start (if left-to-right 0 (height))
         end   (if left-to-right (height) 0)
         ]
@@ -134,11 +134,13 @@
         ))
 
   (draw [{:keys [n r color]}]
+
+    (no-fill)
+    (apply stroke color)
+    (stroke-weight 1)
     (let [points (gen-prism-points n r)]
 
       ; webbing
-      (no-fill)
-      (apply stroke color)
       (push-matrix)
       (translate (/ (width) 2) (/ (height) 2))
       (begin-shape)
@@ -164,7 +166,7 @@
         lifespan 1200]
     (assoc (->Prism created lifespan min-r n (colors 4))
            :type :prism
-           :z-index 4
+           :z-index 12
            :easer (easer-in-circ min-r max-r lifespan)
            )))
 
@@ -233,8 +235,6 @@
                  [(width)       0]
                  )
         points (gen-clay-points n lifespan (width) (height)
-                                
-                                
                                 )
         ]
     (assoc (->Clay created lifespan points center (colors 2) )
@@ -364,4 +364,99 @@
     (assoc (->Confetti created lifespan points)
            :type :confetti
            :z-index 3
+           )))
+
+
+; Glimmer
+; ------------------------------------------------------------------------------
+
+(defrecord Glimmer [created lifespan points]
+  Shape
+  (update [{:keys [points created] :as this}]
+    (-> this
+        (assoc :points 
+               (map #(assoc % :line-weight ((:line-easer %) (- (millis) (% :del) created)))
+                    points))))
+
+  (draw [{:keys [points center]}]
+    (no-fill)
+    (doseq [{:keys [x y color r line-weight]} points]
+      (apply stroke color)
+      (stroke-weight (* r (Math/sin (radians line-weight))))
+      (ellipse x y (- r line-weight) (- r line-weight))))
+
+  (alive [{:keys [lifespan created]}]
+    (>= lifespan (- (millis) created)))) 
+
+(defn gen-glimmer-points [n lifespan w h]
+  (for [i (range n)]
+    (let [theta (radians (rand-int 360))
+          x (+ (/ w 2) (* (+ (* n 10) (rand-int 600)) (Math/cos theta)))
+          y (+ (/ h 2) (* (+ (* n 10) (rand-int 400)) (Math/sin theta))) 
+          color (rand-nth colors)
+          r (+ 40 (rand-int 30))
+          line-weight (+ 40 (rand-int 20))
+          del (* n (rand-int 20))
+          ]
+      {:x x
+       :y y
+       :line-easer (delay-start del (easer-out-circ 0 180 (- lifespan 400 del)))
+       :line-weight line-weight
+       :del del
+       :color color
+       :r r
+       })))
+
+(defn make-glimmer [n]
+  (let [created (millis)
+        lifespan 1000
+        points (gen-glimmer-points n lifespan (width) (height))
+        ]
+    (assoc (->Glimmer created lifespan points)
+           :type :glimmer
+           :z-index 6
+           )))
+
+
+
+; Donut
+; ------------------------------------------------------------------------------
+
+(defrecord Donut [created lifespan color w h]
+  Shape
+  (update [{:keys [leading-easer trailing-easer created] :as this}]
+    (-> this 
+        (assoc :leading (leading-easer (- (millis) created)))
+        (assoc :trailing (trailing-easer (- (millis) created)))))
+
+  (draw [{:keys [leading trailing w h angle]}]
+    (no-fill)
+    (stroke-weight 90)
+    (apply stroke color)
+    (push-matrix)
+    (translate (/ w 2) (/ h 2))
+    (rotate angle)
+    (arc 0 0 700 700 (radians trailing) (radians leading))
+    (pop-matrix)     
+    )
+
+  (alive [{:keys [lifespan created]}]
+    (>= lifespan (- (millis) created)))) 
+
+(defn make-donut []
+  (let [created (millis)
+        lifespan 1000
+        tail-delay 500
+        wipe-speed (- lifespan tail-delay)
+        ]
+    (assoc (->Donut created lifespan [225 225 225] (width) (height))
+           :type :glimmer
+           :z-index 5
+           :angle (radians (rand-int 360))
+           :leading-easer (easer-in-out-circ 0 360 wipe-speed)
+           :trailing-easer (->> (easer-in-out-circ 0 360 wipe-speed) 
+                                (delay-start tail-delay))
+           :leading 0
+           :trailing 0
+
            )))
