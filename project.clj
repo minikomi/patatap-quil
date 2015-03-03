@@ -6,7 +6,6 @@
   :dependencies [[org.clojure/clojure "1.6.0"]
                  [quil "2.2.5"]
                  [overtone/osc-clj "0.9.0"]
-                 [processing-video "1.5.1-SNAPSHOT"]
                  [org.clojure/core.async "0.1.346.0-17112a-alpha"]
 
                  ]
