@@ -239,7 +239,7 @@
         ]
     (assoc (->Clay created lifespan points center (colors 2) )
            :type :clay
-           :z-index 1
+           :z-index -10
            )))
 
 ; Piston
@@ -253,17 +253,16 @@
         (assoc :trailing (trailing-easer (- (millis) created)))))
 
   (draw [{:keys [color n leading trailing]}]
-    (let [w-unit (/ (width) 6)
-          v-unit (/ (height) 4)
-          rect-w (* 4 w-unit)
-          innerheight (* v-unit 2)
+    (let [v-unit (/ (height) 8)
+          rect-w (width)
+          innerheight (* v-unit 6)
           individual-height (if (> 2 n) innerheight
                               (* 0.8 (/ innerheight n)))
           spacing (if (> 2 n) 0
                               (/ (* 0.2 (/ innerheight n) n) (dec n)))]
 
       (push-matrix)
-      (translate w-unit v-unit)
+      (translate 0 v-unit)
 
       (no-stroke)
       (apply fill color)
@@ -309,19 +308,22 @@
 
 (defrecord Confetti [created lifespan points]
   Shape
-  (update [{:keys [points created] :as this}]
+  (update [{:keys [points created r-easer] :as this}]
     (-> this
         (assoc :points 
                (map #(assoc % :x ((:x-easer %) (- (millis) created))
-                              :y ((:y-easer %) (- (millis) created)))
-                    points))))
+                              :y ((:y-easer %) (- (millis) created))
+                              )
+                    points)
+               :r (r-easer (- (millis) created))
+               )))
 
-  (draw [{:keys [points center]}]
+  (draw [{:keys [points center r]}]
     (push-matrix)
     (no-stroke)
     (fill 220 220 200)
     (doseq [{:keys [x y]} points]
-      (ellipse x y 20 20))
+      (ellipse x y r r))
     (pop-matrix))
 
   (alive [{:keys [lifespan created]}]
@@ -357,13 +359,15 @@
 
 (defn make-confetti [n]
   (let [created (millis)
-        lifespan 700
+        lifespan 900
         orientation (rand-nth [:n :s :e :w])
         points (gen-confetti-points n lifespan orientation (width) (height))
         ]
     (assoc (->Confetti created lifespan points)
            :type :confetti
            :z-index 3
+           :r 10
+           :r-easer (easer-out-circ 40 15 lifespan) 
            )))
 
 
@@ -391,7 +395,7 @@
 (defn gen-glimmer-points [n lifespan w h]
   (for [i (range n)]
     (let [theta (radians (rand-int 360))
-          x (+ (/ w 2) (* (+ (* n 10) (rand-int 600)) (Math/cos theta)))
+          x (+ (/ w 2) (* (+ (* n 10) (rand-int 1100)) (Math/cos theta)))
           y (+ (/ h 2) (* (+ (* n 10) (rand-int 400)) (Math/sin theta))) 
           color (rand-nth colors)
           r (+ 40 (rand-int 30))
@@ -436,7 +440,7 @@
     (push-matrix)
     (translate (/ w 2) (/ h 2))
     (rotate angle)
-    (arc 0 0 700 700 (radians trailing) (radians leading))
+    (arc 0 0 900 900 (radians trailing) (radians leading))
     (pop-matrix)     
     )
 
@@ -459,4 +463,53 @@
            :leading 0
            :trailing 0
 
+           )))
+
+
+; Frisbee
+; ------------------------------------------------------------------------------
+
+(defrecord Frisbee [created lifespan color w h xpos]
+  Shape
+  (update [{:keys [radius-easer moving-easer] :as this}]
+    
+    (assoc this
+           :ypos (moving-easer (- (millis) created))
+           :radius (radius-easer (- (millis) created))
+           ))
+
+  (draw [{:keys [ypos radius color]}]
+    (no-stroke)
+    (apply fill color)
+    (push-matrix)
+    (translate (/ w 2) (/ h 2))
+    (ellipse xpos ypos radius radius)
+    (pop-matrix)
+    )
+
+  (alive [{:keys [lifespan created]}]
+    (>= lifespan (- (millis) created)))) 
+
+(defn make-frisbee []
+  (let [created (millis)
+        lifespan 1000
+        to-center 500
+        shrink-length (- lifespan to-center)
+        color (colors 3)
+        position (rand-int 4)
+        [xpos ypos] (case position
+                      0 [-350 (- (/ (height) 2))]
+                      1 [ 350 (- (/ (height) 2))]
+                      2 [-350 (/ (height) 2)]
+                      3 [ 350 (/ (height) 2)]
+                      )
+        radius 300
+        ]
+    (assoc (->Frisbee created lifespan color (width) (height) xpos)
+           :type :frisbee
+           :z-index 4
+           :ypos ypos
+           :radius radius
+           :moving-easer (easer-out-circ ypos (* ypos 0.2) to-center)
+           :radius-easer (delay-start to-center (easer-out-circ radius 0 shrink-length))
            )))

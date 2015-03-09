@@ -41,7 +41,7 @@
 
                           0 (s/make-piston 1( < 0.5 ( rand)))
                           1 (s/make-piston 7( < 0.5 ( rand)))
-                          (s/make-piston 5( < 0.5 ( rand)))
+                          (s/make-frisbee)
 
                           ) 
                         )))
@@ -69,7 +69,7 @@
                       )
 
                     )
-           5 (swap! shapes conj ( s/make-glimmer 5))
+           5 (swap! shapes conj ( s/make-glimmer 18))
            6 (swap! shapes conj ( s/make-wipe ( < 0.5 ( rand))))
            7 (swap! shapes conj ( s/make-donut))
            )
@@ -97,8 +97,9 @@
   75 (do (swap! shapes  conj (s/make-piston 4 (< 0.5 (rand)))) state)
   76 (do (swap! shapes  conj (s/make-piston 7 (< 0.5 (rand)))) state)
   77 (do (swap! shapes  conj (s/make-confetti 16)) state)
-  78 (do (swap! shapes  conj (s/make-glimmer 10)) state)
+  78 (do (swap! shapes  conj (s/make-glimmer 18)) state)
   66 (do (swap! shapes  conj (s/make-donut)) state)
+  86 (do (swap! shapes  conj (s/make-frisbee)) state)
 
   ;default - return unchanged state
   state
@@ -138,7 +139,7 @@
 (defn draw-state [state]
   (background 181 181 181)
   (doseq [s @shapes] (s/draw s))
-  (save-frame "frame-######.tga")
+  (comment (save-frame "frames/frame-######.tga"))
   )
 
 
