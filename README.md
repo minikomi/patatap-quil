@@ -15,7 +15,9 @@ over osc).
 
 ## use
 
-    lein run in base dir
+## start sketch
+
+    lein run
 
 ### keyboard commands
 
