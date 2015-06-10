@@ -138,6 +138,7 @@
 
 (defn on-close [state]
   (osc/osc-close (:server state))
+  (System/exit 0) 
   )
 
 (defn -main [& args]
