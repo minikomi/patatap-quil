@@ -8,7 +8,6 @@
     [overtone.osc :as osc]
     [clojure.core.async :as async :refer [<! put! chan go]]
     )
-
   (:gen-class :main true)
   )
 
@@ -20,14 +19,13 @@
   (let [server (osc/osc-server 1337)
         osc-chan (chan)
         ]
-
-     ( osc/osc-handle server "/snare"   ( fn [_] ( put! osc-chan  {:msg 1})))
-     ( osc/osc-handle server "/hat"     ( fn [_] ( put! osc-chan {:msg 2})))
-     ( osc/osc-handle server "/kick"    ( fn [_] ( put! osc-chan  {:msg 3})))
-     ( osc/osc-handle server "/piano"   ( fn [_] ( put! osc-chan {:msg 4})))
-     ( osc/osc-handle server "/accent1" ( fn [_] ( put! osc-chan  {:msg 5})))
-     ( osc/osc-handle server "/accent2" ( fn [_] ( put! osc-chan  {:msg 6})))
-     ( osc/osc-handle server "/accent3" ( fn [_] ( put! osc-chan {:msg 7})))
+     (osc/osc-handle server "/snare"   ( fn [_] ( put! osc-chan  {:msg 1})))
+     (osc/osc-handle server "/hat"     ( fn [_] ( put! osc-chan {:msg 2})))
+     (osc/osc-handle server "/kick"    ( fn [_] ( put! osc-chan  {:msg 3})))
+     (osc/osc-handle server "/piano"   ( fn [_] ( put! osc-chan {:msg 4})))
+     (osc/osc-handle server "/accent1" ( fn [_] ( put! osc-chan  {:msg 5})))
+     (osc/osc-handle server "/accent2" ( fn [_] ( put! osc-chan  {:msg 6})))
+     (osc/osc-handle server "/accent3" ( fn [_] ( put! osc-chan {:msg 7})))
 
      (go 
        (loop [msg (:msg (<! osc-chan))]
@@ -37,41 +35,28 @@
                       (conj
                         (filterv #(not (= (:type %) :piston)) shps)
                         (case (rand-int 5)
-
-
                           0 (s/make-piston 1( < 0.5 ( rand)))
                           1 (s/make-piston 7( < 0.5 ( rand)))
-                          (s/make-frisbee)
-
-                          ) 
-                        )))
+                          (s/make-frisbee)))))
            2 (swap! shapes 
                     (fn [shps] 
                       (conj
                         (filterv #(not (= (:type %) :confetti)) shps)    
-                        (s/make-confetti 10) 
-
-                        ))
-                    )
+                        (s/make-confetti 10))))
            3 (swap! shapes 
                     (fn [shps] 
                       (conj
                         (filterv #(not (= (:type %) :clay)) shps)   
-                        ( s/make-clay 12))  
-                      )
-                    )
+                        (s/make-clay 12))))
            4 (swap! shapes
                     (fn [shps] 
                       (conj
                         (filterv #(not (= (:type %) :prism)) shps)   
                         (s/make-prism (+ 3 (* 2 (rand-int 3))) )
-                        )
-                      )
-
-                    )
-           5 (swap! shapes conj ( s/make-glimmer 18))
-           6 (swap! shapes conj ( s/make-wipe ( < 0.5 ( rand))))
-           7 (swap! shapes conj ( s/make-donut))
+                        )))
+           5 (swap! shapes conj (s/make-glimmer 18))
+           6 (swap! shapes conj (s/make-wipe ( < 0.5 ( rand))))
+           7 (swap! shapes conj (s/make-donut))
            )
         (recur (:msg (<! osc-chan)))))
 
@@ -79,27 +64,29 @@
                   :bg-color (ui/->ToggleBox 90 20 "bg" false)
                   }
      :show-ui true
+     :render false
      :server server
      }
   ))
 
 
 (defn handle-key [state event]
-  (case (:key-code event)
-  32 (update-in state [:show-ui] not)
-  65 (do (swap! shapes  conj (s/make-wipe (< 0.5 (rand)))) state)
-  83 (do (swap! shapes  conj (s/make-veil (< 0.5 (rand)))) state)
-  68 (do (swap! shapes  conj (s/make-prism 3)) state)
-  70 (do (swap! shapes  conj (s/make-prism 4)) state)
-  71 (do (swap! shapes  conj (s/make-prism 5)) state)
-  72 (do (swap! shapes  conj (s/make-clay 12)) state)
-  74 (do (swap! shapes  conj (s/make-piston 1 (< 0.5 (rand)))) state)
-  75 (do (swap! shapes  conj (s/make-piston 4 (< 0.5 (rand)))) state)
-  76 (do (swap! shapes  conj (s/make-piston 7 (< 0.5 (rand)))) state)
-  77 (do (swap! shapes  conj (s/make-confetti 16)) state)
-  78 (do (swap! shapes  conj (s/make-glimmer 18)) state)
-  66 (do (swap! shapes  conj (s/make-donut)) state)
-  86 (do (swap! shapes  conj (s/make-frisbee)) state)
+  (case (:raw-key event)
+  \u (update-in state [:show-ui] not)
+  \r (update-in state [:render] not)
+  \a (do (swap! shapes  conj (s/make-wipe (< 0.5 (rand)))) state)
+  \s (do (swap! shapes  conj (s/make-veil (< 0.5 (rand)))) state)
+  \d (do (swap! shapes  conj (s/make-prism 3)) state)
+  \f (do (swap! shapes  conj (s/make-prism 4)) state)
+  \g (do (swap! shapes  conj (s/make-prism 5)) state)
+  \h (do (swap! shapes  conj (s/make-clay 12)) state)
+  \j (do (swap! shapes  conj (s/make-piston 1 (< 0.5 (rand)))) state)
+  \k (do (swap! shapes  conj (s/make-piston 4 (< 0.5 (rand)))) state)
+  \l (do (swap! shapes  conj (s/make-piston 7 (< 0.5 (rand)))) state)
+  \z (do (swap! shapes  conj (s/make-confetti 16)) state)
+  \x (do (swap! shapes  conj (s/make-glimmer 18)) state)
+  \c (do (swap! shapes  conj (s/make-donut)) state)
+  \v (do (swap! shapes  conj (s/make-frisbee)) state)
 
   ;default - return unchanged state
   state
@@ -137,19 +124,23 @@
 
 
 (defn draw-state [state]
-  (background 181 181 181)
+  (background (if (-> state :current-ui :bg-color :active) 60 181))
   (doseq [s @shapes] (s/draw s))
-  (comment (save-frame "frames/frame-######.tga"))
+  (when (:show-ui state) 
+    (doseq [u (-> state :current-ui vals)] (ui/draw u))
+    (when (:render state)
+      (fill 255 0 0)
+      (rect 0 0 20 20)
+      ))
+  (when (:render state)
+    (save-frame "frames/frame-######.tga"))
   )
-
 
 (defn on-close [state]
   (osc/osc-close (:server state))
-
   )
 
 (defn -main [& args]
-
   (sketch
   :title "patatap"
   :renderer :opengl
